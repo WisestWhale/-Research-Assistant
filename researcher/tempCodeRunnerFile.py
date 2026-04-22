@@ -11,7 +11,7 @@ if not api:
  
 client = anthropic.Anthropic()
 
-messages = []
+message = []
 print("Agent ready for anwsering your questions")
 while True:
     user_input = input("You:")
@@ -19,15 +19,15 @@ while True:
     if  user_input.lower() == "quit":
      break
 
-    messages.append({"role" : "user" , "content" : user_input })  
+    message.append({"role" : "user" , "content" : user_input })  
  
     response = client.messages.create (
         model = "claude-haiku-4-5-20251001",
-        max_tokens= 100,
-        system = "You're purpose is to help the user ",
-        messages= messages
+        max_tokens= 500,
+        system = "You are a research assistant. Help the user find, summarize and understand information clearly and concisely.",
+        messages = message
     )
 
     reply = response.content[0].text
-    messages.append({"role": "assistant" , "content" : reply})
+    message.append({"role": "assistant" , "content" : reply})
     print(reply)
