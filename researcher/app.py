@@ -3,14 +3,19 @@ import streamlit as st
 from dotenv import load_dotenv
 import anthropic
 from tavily import TavilyClient
+from PyPDF2 import PdfReader
+
+
 
 load_dotenv()
 
 client = anthropic.Anthropic()
 tavily = TavilyClient(api_key=os.getenv("TAVkey"))
 
-st.title("Researchr 🔍")
-st.caption("AI research assistant powered by Claude")
+
+   
+
+
 
 tools = [
     {
@@ -29,6 +34,33 @@ tools = [
     }
 ]
 
+def extract_from_pdf(uploaded_file):
+   reader = PdfReader(uploaded_file) 
+   text = ""
+   
+   for page in reader.pages:
+       content = page.extract_text()
+       if content:
+           text+=content + "\n"
+           
+   return text
+
+st.title("Researcher 🔍")
+st.caption("AI research assistant powered by Claude")
+st.sidebar.title("File Upload")
+uploaded_file  = st.sidebar.file_uploader("Upload your file")
+if uploaded_file:
+    with st.spinner("Processing"):
+        if uploaded_file.type == "application/pdf":
+            raw_text = extract_from_pdf(uploaded_file)
+            
+        else:
+            raw_text  = uploaded_file.read().decode("utf-8")
+        
+        st.sidebar.success("File Uploaded")
+        st.sidebar.text_area("Preview", raw_text[:500] , height= 150)
+        
+
 def search_web(query):
     results = tavily.search(query=query, max_results=3)
     output = ""
@@ -44,7 +76,7 @@ def run_agent(user_message, status_container):
         response = client.messages.create(
             model="claude-haiku-4-5-20251001",
             max_tokens=1024,
-            system="You are a research assistant called Researchr. Use the search tool to find current information before answering. Be clear and structured.",
+            system="You are a research assistant called Researcher. Use the search tool to find current information before answering. Be clear and structured.",
             tools=tools,
             messages=messages
         )
