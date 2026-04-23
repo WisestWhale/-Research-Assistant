@@ -56,7 +56,8 @@ if uploaded_file:
             
         else:
             raw_text  = uploaded_file.read().decode("utf-8")
-        
+            
+        st.session_state.medical_context= raw_text
         st.sidebar.success("File Uploaded")
         st.sidebar.text_area("Preview", raw_text[:500] , height= 150)
         
@@ -69,14 +70,18 @@ def search_web(query):
     return output
 
 def run_agent(user_message, status_container):
-    messages = [{"role": "user", "content": user_message}]
+    full_message = user_message
+    if "medical_context" in st.session_state:
+        extra_content = f"\nHere is background medical data from the uploaded file: {st.session_state.medical_context}"
+        full_message = user_message  + extra_content
+    messages = [{"role": "user", "content": full_message}]
     counter = 0
 
     while True:
         response = client.messages.create(
             model="claude-haiku-4-5-20251001",
             max_tokens=1024,
-            system="You are a research assistant called Researcher. Use the search tool to find current information before answering. Be clear and structured.",
+            system="You are a research assistant called Researcher. Use the search tool to find current information before answering. Be clear and structured. and also you have the ability to read from pdf",
             tools=tools,
             messages=messages
         )
