@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 import anthropic
 from tavily import TavilyClient
 from PyPDF2 import PdfReader
-
+import base64
 
 
 load_dotenv()
@@ -34,6 +34,12 @@ tools = [
     }
 ]
 
+
+def encode_image(imagefile):
+    return base64.b64encode(imagefile.read()).decode('utf-8')
+
+
+
 def extract_from_pdf(uploaded_file):
    reader = PdfReader(uploaded_file) 
    text = ""
@@ -48,19 +54,23 @@ def extract_from_pdf(uploaded_file):
 st.title("Researcher 🔍")
 st.caption("AI research assistant powered by Claude")
 st.sidebar.title("File Upload")
-uploaded_file  = st.sidebar.file_uploader("Upload your file")
+uploaded_file  = st.sidebar.file_uploader("Upload your file or image")
 if uploaded_file:
     with st.spinner("Processing"):
         if uploaded_file.type == "application/pdf":
-            raw_text = extract_from_pdf(uploaded_file)
-            
+            st.session_state.medical_context = extract_from_pdf(uploaded_file)
+        elif uploaded_file.type in ["image/png", "image/jpeg", "image/jpg"]:
+            st.sidebar.image(uploaded_file, caption="Uploaded Scan")
+            st.sidebar.success("Image Ready for Analysis")
+                
         else:
-            raw_text  = uploaded_file.read().decode("utf-8")
+            st.session_state.medical_context = uploaded_file.read().decode("utf-8")
             
-        st.session_state.medical_context= raw_text
-        st.sidebar.success("File Uploaded")
-        st.sidebar.text_area("Preview", raw_text[:500] , height= 150)
         
+        st.sidebar.success("File Uploaded")
+        if "medical_context" in st.session_state:
+          st.sidebar.text_area("Preview", st.session_state.medical_context[:500] , height= 150)
+         
 
 def search_web(query):
     results = tavily.search(query=query, max_results=3)
@@ -69,12 +79,24 @@ def search_web(query):
         output += f"Source: {r['url']}\n{r['content']}\n\n"
     return output
 
-def run_agent(user_message, status_container):
-    full_message = user_message
+def run_agent(user_message, status_container, image_file = None):
+    text_to_send = user_message
     if "medical_context" in st.session_state:
-        extra_content = f"\nHere is background medical data from the uploaded file: {st.session_state.medical_context}"
-        full_message = user_message  + extra_content
-    messages = [{"role": "user", "content": full_message}]
+        text_to_send += f"\n\n[DOCUMENT CONTEXT]:\n{st.session_state.medical_context}"
+    content_list = [{"type": "text", "text": text_to_send}]
+        
+    if image_file:
+        image_base64 = encode_image(image_file)
+        content_list.append({
+            "type": "image",
+            "source": {
+                "type": "base64",
+                "media_type": image_file.type,
+                "data": image_base64,
+            },
+        })
+        
+    messages = [{"role": "user", "content": content_list}]
     counter = 0
 
     while True:
@@ -127,8 +149,13 @@ if prompt := st.chat_input("Ask me anything..."):
 
     # Run agent and show response
     with st.chat_message("assistant"):
+        status_placeholder = st.empty()
         status = st.empty()
-        answer = run_agent(prompt, status)
+        image_to_pass = None;
+        if uploaded_file and uploaded_file.type != "application/pdf":
+            img_to_pass = uploaded_file
+        answer = run_agent(prompt, status_placeholder , img_to_pass)
+        
         status.empty()
         st.markdown(answer)
         st.session_state.messages.append({"role": "assistant", "content": answer})
