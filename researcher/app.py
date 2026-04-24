@@ -80,6 +80,9 @@ def search_web(query):
     return output
 
 def run_agent(user_message, status_container, image_file = None):
+    messages = []
+    for msg in st.session_state.messages[:-1]:
+     messages.append({"role": msg["role"], "content": msg["content"]})
     text_to_send = user_message
     if "medical_context" in st.session_state:
         text_to_send += f"\n\n[DOCUMENT CONTEXT]:\n{st.session_state.medical_context}"
@@ -117,6 +120,7 @@ def run_agent(user_message, status_container, image_file = None):
             tool_results = []
             for block in response.content:
                 if block.type == "tool_use":
+                 if block.name == "search_web":
                     status_container.write(f"🔍 Searching: *{block.input['query']}*")
                     result = search_web(block.input["query"])
                     tool_results.append({
@@ -151,7 +155,7 @@ if prompt := st.chat_input("Ask me anything..."):
     with st.chat_message("assistant"):
         status_placeholder = st.empty()
         status = st.empty()
-        image_to_pass = None;
+        img_to_pass = None;
         if uploaded_file and uploaded_file.type != "application/pdf":
             img_to_pass = uploaded_file
         answer = run_agent(prompt, status_placeholder , img_to_pass)
