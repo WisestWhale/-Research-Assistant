@@ -5,11 +5,14 @@ import anthropic
 from tavily import TavilyClient
 from PyPDF2 import PdfReader
 import base64
+from sentence_transformers import SentenceTransformer , util
+import torch
 
 load_dotenv()
 
 client = anthropic.Anthropic()
 tavily = TavilyClient(api_key=os.getenv("TAVkey"))
+embedder = SentenceTransformer('all-MiniLM-L6-v2')
 
 tools = [
     {
@@ -27,6 +30,15 @@ tools = [
         }
     }
 ]
+def chunk_text(raw_text, chunk_size = 500 , overlaps = 100 ):
+    chunks= []
+    for i in range (0 , len(raw_text) ,chunk_size - overlaps ):
+       chunk = raw_text[i : i + chunk_size]
+       chunks.append(chunk)
+       return chunks 
+    
+
+
 
 def encode_image(imagefile):
     return base64.b64encode(imagefile.read()).decode('utf-8')
@@ -53,10 +65,11 @@ def run_agent(user_message, image_file=None):
     messages = []
     for msg in st.session_state.messages[:-1]:
         messages.append({"role": msg["role"], "content": msg["content"]})
-
+    
     # 2. Enrich the current prompt
     text_to_send = user_message
-    if "medical_context" in st.session_state:
+    if "pdf_chunks" in st.session_state:
+        search_relevance = search_pdf(user_message , st.session_state.pdf_chunks)
         text_to_send += f"\n\n[DOCUMENT CONTEXT]:\n{st.session_state.medical_context}"
     
     content_list = [{"type": "text", "text": text_to_send}]
@@ -122,17 +135,13 @@ st.sidebar.title("File Upload")
 uploaded_file = st.sidebar.file_uploader("Upload your file or image")
 
 if uploaded_file:
-    with st.spinner("Processing"):
-        if uploaded_file.type == "application/pdf":
-            st.session_state.medical_context = extract_from_pdf(uploaded_file)
-        elif uploaded_file.type in ["image/png", "image/jpeg", "image/jpg"]:
-            st.sidebar.image(uploaded_file, caption="Uploaded Scan")
-            st.sidebar.success("Image Ready")
-        else:
-            st.session_state.medical_context = uploaded_file.read().decode("utf-8")
-        
-        if "medical_context" in st.session_state:
-            st.sidebar.text_area("Preview", st.session_state.medical_context[:500], height=150)
+    if "last_uploaded" not in st.session_state or st.session_state.last_uploaded != uploaded_file.name:
+        with st.spinner("Indexing Document..."):
+            if uploaded_file.type == "application/pdf":
+                raw_text = extract_from_pdf(uploaded_file)
+                st.session_state.pdf_chunks = chunk_text(raw_text)
+                st.sidebar.success(f"Split into {len(st.session_state.pdf_chunks)} chunks")
+            st.session_state.last_uploaded = uploaded_file.name
 
 # Chat logic
 if "messages" not in st.session_state:
@@ -155,3 +164,4 @@ if prompt := st.chat_input("Ask me anything..."):
         answer = run_agent(prompt, img_to_pass)
         st.markdown(answer)
         st.session_state.messages.append({"role": "assistant", "content": answer})
+        
