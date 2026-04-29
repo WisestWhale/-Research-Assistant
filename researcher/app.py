@@ -6,6 +6,7 @@ from tavily import TavilyClient
 from PyPDF2 import PdfReader
 import base64
 from sentence_transformers import SentenceTransformer , util
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 import torch
 
 load_dotenv()
@@ -30,14 +31,30 @@ tools = [
         }
     }
 ]
-def chunk_text(raw_text, chunk_size = 500 , overlaps = 100 ):
-    chunks= []
-    for i in range (0 , len(raw_text) ,chunk_size - overlaps ):
-       chunk = raw_text[i : i + chunk_size]
-       chunks.append(chunk)
-       return chunks 
+def chunk_text(raw_text):
+    if not raw_text or not raw_text.strip():
+      return []
+    text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
+     chunk_size=450, chunk_overlap=50)
+    chunks  = text_splitter.split_text(raw_text)
+    return chunks
     
-
+def search_pdf(query, chunks: list , chunk_embeddings):
+    
+    if not chunks:
+     return""
+    
+    query_embedding = embedder.encode(query  , convert_to_tensor = True)
+    scores = util.cos_sim(query_embedding, chunk_embeddings)[0]
+    top_indices = torch.topk(scores, min(4, len(chunks))).indices.tolist() #grab the position of list and conver to list from tensor
+    top_indices = sorted(top_indices)
+    
+    relevant = []
+    for i in top_indices:
+     relevant.append(chunks[i]) #get the actual text
+    
+    return "\n---\n".join(relevant)
+    
 
 
 def encode_image(imagefile):
@@ -50,6 +67,7 @@ def extract_from_pdf(uploaded_file):
         content = page.extract_text()
         if content:
             text += content + "\n"
+    
     return text
 
 def search_web(query):
@@ -60,30 +78,34 @@ def search_web(query):
     return output
 
 # --- CORE AGENT LOGIC ---
-def run_agent(user_message, image_file=None):
+def run_agent(query, image_bytes= None,
+    image_media_type= None
+):
     # 1. Build history (Memory)
     messages = []
     for msg in st.session_state.messages[:-1]:
         messages.append({"role": msg["role"], "content": msg["content"]})
     
     # 2. Enrich the current prompt
-    text_to_send = user_message
-    if "pdf_chunks" in st.session_state:
-        search_relevance = search_pdf(user_message , st.session_state.pdf_chunks)
-        text_to_send += f"\n\n[DOCUMENT CONTEXT]:\n{st.session_state.medical_context}"
+    text_to_send = query
+    if "pdf_chunks" in st.session_state and "chunk_embeddings" in st.session_state:
+        search_relevance = search_pdf(query ,  st.session_state.pdf_chunks ,st.session_state.chunk_embeddings)
+        if search_relevance:
+         text_to_send += f"\n\n[DOCUMENT CONTEXT]:\n{search_relevance}"
     
     content_list = [{"type": "text", "text": text_to_send}]
         
-    if image_file:
-        image_base64 = encode_image(image_file)
+    if image_bytes:
+        image_base64 = base64.b64encode(image_bytes).decode('utf-8')
         content_list.append({
             "type": "image",
             "source": {
                 "type": "base64",
-                "media_type": image_file.type,
+                "media_type": image_media_type,
                 "data": image_base64,
             },
         })
+    
         
     # 3. Add the enriched message to the thread
     messages.append({"role": "user", "content": content_list})
@@ -138,10 +160,22 @@ if uploaded_file:
     if "last_uploaded" not in st.session_state or st.session_state.last_uploaded != uploaded_file.name:
         with st.spinner("Indexing Document..."):
             if uploaded_file.type == "application/pdf":
-                raw_text = extract_from_pdf(uploaded_file)
-                st.session_state.pdf_chunks = chunk_text(raw_text)
-                st.sidebar.success(f"Split into {len(st.session_state.pdf_chunks)} chunks")
-            st.session_state.last_uploaded = uploaded_file.name
+              raw_text = extract_from_pdf(uploaded_file)
+              st.session_state.pdf_chunks = chunk_text(raw_text)
+              st.session_state.chunk_embeddings = embedder.encode(
+              st.session_state.pdf_chunks,
+              convert_to_tensor=True,
+              show_progress_bar=False
+                )
+              st.sidebar.success(f"Indexed {len(st.session_state.pdf_chunks)} chunks")
+
+            elif uploaded_file.type in ["image/jpeg", "image/png", "image/webp", "image/gif"]:
+                st.session_state.image_bytes = uploaded_file.read()
+                st.session_state.image_type = uploaded_file.type
+                st.sidebar.success("Image ready")
+
+            else:
+                st.sidebar.error(f"Unsupported file type: {uploaded_file.type}")
 
 # Chat logic
 if "messages" not in st.session_state:
@@ -159,9 +193,15 @@ if prompt := st.chat_input("Ask me anything..."):
     with st.chat_message("assistant"):
         img_to_pass = None
         if uploaded_file and uploaded_file.type != "application/pdf":
-            img_to_pass = uploaded_file
+         st.session_state.image_bytes = uploaded_file.read()
+         st.session_state.image_type = uploaded_file.type
         
-        answer = run_agent(prompt, img_to_pass)
+        answer = run_agent(
+            prompt,
+            image_bytes=st.session_state.get("image_bytes"),
+           image_media_type=st.session_state.get("image_type")
+
+            )
         st.markdown(answer)
         st.session_state.messages.append({"role": "assistant", "content": answer})
         
