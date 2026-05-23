@@ -24,7 +24,8 @@ Clone the repo, create a virtual environment, install dependencies with `pip ins
 ## Project structure
 ```
 researchr/
-├── app.py                    
+├── Reasearch.py                    
 ├── .gitignore      
 └── README.md       
 ```
+The rest of files are the process for developing the code
