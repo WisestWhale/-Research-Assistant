@@ -29,3 +29,5 @@ researchr/
 └── README.md       
 ```
 The rest of files are the process for developing the code
+
+print("Ima an em[eror])
