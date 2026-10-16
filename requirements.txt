@@ -1,0 +1,11 @@
+anthropic
+tavily-python
+streamlit
+python-dotenv
+langchain-text-splitters
+pinecone
+langchain-pinecone
+langchain-community
+pymupdf
+langchain-huggingface
+sentence-transformers
