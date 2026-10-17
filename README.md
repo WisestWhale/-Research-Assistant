@@ -8,7 +8,7 @@ A Streamlit research assistant using Claude and Tavily, with PDF retrieval throu
 - Inspect the sources consulted for each answer.
 - Choose 1–5 results per search. Repeated searches within a question reuse results.
 - Upload PDFs for retrieval or images for visual questions.
-- Download a text transcript, including source links.
+- Download a plain-text or Markdown transcript, including source links. Markdown keeps answer formatting and clickable sources under each answer.
 
 Sources consulted are pages returned by search, not a guarantee that every claim is supported. Review the links before relying on an answer.
 
@@ -62,7 +62,7 @@ From the project root:
 python -m unittest discover -s researcher -p "test_*.py" -v
 ```
 
-The offline tests cover search reuse, source deduplication, link filtering, retry after failure, blank queries and transcript formatting. They do not exercise live APIs or the Streamlit interface.
+The offline tests cover search reuse, source deduplication, link filtering, retry after failure, blank queries, text transcripts and Markdown export (including escaped source labels). They do not exercise live APIs or the Streamlit interface.
 
 ## Current limitations
 
