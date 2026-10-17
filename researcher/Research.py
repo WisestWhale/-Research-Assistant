@@ -313,3 +313,10 @@ if st.session_state.messages:
         file_name="research_chat.txt",
         mime="text/plain",
     )
+
+    st.sidebar.download_button(
+        "Download chat as Markdown",
+        data=ChatExport.to_markdown(st.session_state.messages),
+        file_name="research_chat.md",
+        mime="text/markdown",
+    )
