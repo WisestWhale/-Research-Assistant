@@ -277,6 +277,15 @@ if uploaded_file:
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+if st.sidebar.button(
+    "Clear chat",
+    disabled=not st.session_state.messages,
+    help="Remove this conversation and its source list. Uploaded files stay available.",
+):
+    st.session_state.messages = []
+    st.session_state.last_sources = []
+    st.rerun()
+
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
