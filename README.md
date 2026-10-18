@@ -5,6 +5,7 @@ A Streamlit research assistant using Claude and Tavily, with PDF retrieval throu
 ## Features
 
 - Ask follow-up questions using conversation history.
+- Use **Clear chat** to remove the current conversation and its source list while keeping uploaded files available. Download the chat first if you want to keep it.
 - Inspect the sources consulted for each answer.
 - Choose 1–5 results per search. Repeated searches within a question reuse results.
 - Upload PDFs for retrieval or images for visual questions.
