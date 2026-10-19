@@ -71,3 +71,22 @@ The offline tests cover search reuse, source deduplication, link filtering, retr
 - Conversation history stays in the current Streamlit session.
 - Prior image attachments are not resent on later questions.
 - API credentials are required at startup for all services.
+
+## Browser action prototype
+
+Run the app locally and enable **Allow browser suggestions** in the sidebar. Try:
+
+> Find the Python documentation and open it for me.
+
+The assistant searches, then can suggest one source page. You see the exact URL and reason before choosing **Open page** or **Cancel**. No browser opens during the model's tool call. Completed or cancelled actions do not run again on a page refresh. Clearing chat also removes pending actions.
+
+This first step only opens a browser tab. It cannot click around a page, type into apps or run commands. The browser opens on the computer running Streamlit, so use this feature locally. A successful launch does not confirm that the page loaded.
+
+To test the buttons without API keys:
+
+```powershell
+cd researcher
+python -m streamlit run action_demo.py
+```
+
+The demo offers the Python documentation URL and has a Reset demo button. The regular app still requires its API credentials. Chat downloads currently include answers and sources, not the browser action status.
