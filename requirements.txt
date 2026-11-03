@@ -9,3 +9,4 @@ langchain-community
 pymupdf
 langchain-huggingface
 sentence-transformers
+rank-bm25

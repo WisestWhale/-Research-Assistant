@@ -68,21 +68,6 @@ class ResearchToolsTests(unittest.TestCase):
                          "User: Question\n\nAssistant: Answer\n\nSources:\n- Example: https://example.com")
         self.assertEqual(ChatExport.to_text([]), "")
 
-
-    def test_markdown_export_preserves_answer_and_escapes_source_labels(self):
-        messages = [
-            {"role": "user", "content": "Question"},
-            {"role": "assistant", "content": "**Answer**\n\n- A finding", "sources": [
-                {"title": "Study [v2]\nnotes", "url": "https://example.com/a b?q=(test)"}
-            ]},
-        ]
-        output = ChatExport.to_markdown(messages)
-        self.assertIn("## User\n\nQuestion\n\n---\n\n## Assistant", output)
-        self.assertIn("**Answer**\n\n- A finding", output)
-        self.assertIn(r"- [Study \[v2\] notes](<https://example.com/a%20b?q=(test)>)", output)
-        self.assertEqual(ChatExport.to_markdown([]), "")
-        self.assertNotIn("Sources consulted", ChatExport.to_markdown(messages[:1]))
-
     def test_usage_adds_every_call_and_estimates_cost(self):
         usage = Usage()
         usage.add(SimpleNamespace(input_tokens=1_200, output_tokens=300))

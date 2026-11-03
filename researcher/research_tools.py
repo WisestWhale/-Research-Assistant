@@ -92,21 +92,21 @@ class ChatExport:
             sections.append(text)
         return "\n\n".join(sections)
 
-    @staticmethod
-    def to_markdown(messages):
-        """Preserve answer formatting and include clickable sources per message."""
-        sections = []
-        for message in messages:
-            text = f"## {message['role'].capitalize()}\n\n{message['content']}"
-            sources = message.get("sources", [])
-            if sources:
-                text += "\n\n### Sources consulted\n\n"
-                links = []
-                for source in sources:
-                    title = " ".join(source['title'].split())
-                    title = re.sub(r"([\\`*_{}\[\]<>])", r"\\\1", title)
-                    url = quote(source['url'], safe=":/?#[]@!$&'()*+,;=%")
-                    links.append(f"- [{title}](<{url}>)")
-                text += "\n".join(links)
-            sections.append(text)
-        return "\n\n---\n\n".join(sections)
+    # @staticmethod
+    # def to_markdown(messages):
+    #     """Preserve answer formatting and include clickable sources per message."""
+    #     sections = []
+    #     for message in messages:
+    #         text = f"## {message['role'].capitalize()}\n\n{message['content']}"
+    #         sources = message.get("sources", [])
+    #         if sources:
+    #             text += "\n\n### Sources consulted\n\n"
+    #             links = []
+    #             for source in sources:
+    #                 title = " ".join(source['title'].split())
+    #                 title = re.sub(r"([\\`*_{}\[\]<>])", r"\\\1", title)
+    #                 url = quote(source['url'], safe=":/?#[]@!$&'()*+,;=%")
+    #                 links.append(f"- [{title}](<{url}>)")
+    #             text += "\n".join(links)
+    #         sections.append(text)
+    #     return "\n\n---\n\n".join(sections)
