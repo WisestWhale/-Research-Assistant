@@ -10,7 +10,9 @@ A Streamlit research assistant using Claude and Tavily, with PDF retrieval throu
 - See how many Claude calls and tokens each answer used, with an estimated cost at Claude Haiku 4.5 list prices.
 - Long answers cut off at the length limit are shown with a note instead of being discarded.
 - Choose 1–5 results per search. Repeated searches within a question reuse results.
-- Upload PDFs for retrieval or images for visual questions.
+- Upload PDFs for retrieval or images for visual questions. PDF search combines vector search with a cross-encoder reranker (`ms-marco-MiniLM-L6-v2`) that picks the four chunks sent to Claude; **Inspect reranking** shows every candidate's score and which ones were sent.
+- **Test keyword search** runs BM25 keyword scoring over the indexed PDF's chunks.
+- **Client requirements**: upload a brief or transcript PDF and extract a checklist. Each requirement must come with a quote that is found word for word on its page, or nothing is saved. Mark items reviewed and done, and download the checklist as JSON.
 - Download a plain-text transcript, including source links.
 
 Sources consulted are pages returned by search, not a guarantee that every claim is supported. Review the links before relying on an answer.
@@ -26,6 +28,8 @@ python -m venv venv
 python -m pip install -r requirements.txt
 ```
 
+If PowerShell blocks `Activate.ps1`, skip activation and call the venv's Python directly, for example `.\venv\Scripts\python.exe -m pip install -r requirements.txt`. The install includes PyTorch through `sentence-transformers`, so it takes a few minutes.
+
 Create `researcher/.env` with your own credentials:
 
 ```dotenv
@@ -34,7 +38,7 @@ TAVkey=your_key
 PINECONE_API_KEY=your_key
 ```
 
-Create a Pinecone index named `research`, configured for the 384-dimensional `all-MiniLM-L6-v2` embeddings. The first embedding use downloads the model. Claude, Tavily, and Pinecone require accounts and may incur charges.
+Create a Pinecone index named `research`, configured for the 384-dimensional `all-MiniLM-L6-v2` embeddings. The first embedding use downloads the embedding model, and the first PDF question downloads the reranker model. Claude, Tavily, and Pinecone require accounts and may incur charges.
 
 Run the maintained entry point:
 
@@ -47,9 +51,11 @@ python -m streamlit run Research.py
 
 ```text
 researcher/
-  Research.py             Streamlit UI, document ingestion and agent loop
-  research_tools.py       Source, WebSearch and ChatExport classes
-  test_research_tools.py  Offline helper tests
+  Research.py              Streamlit UI, PDF ingestion, reranking and agent loop
+  research_tools.py        Source, WebSearch, Usage and ChatExport classes
+  client_requirements.py   Requirement extraction and quote validation
+  requirements_ui.py       Client requirements checklist panel
+  test_research_tools.py   Offline helper tests
 requirements.txt         Application dependencies
 ```
 
