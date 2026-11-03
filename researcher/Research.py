@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 import anthropic
 from tavily import TavilyClient
 import base64
-from research_tools import ChatExport, WebSearch
+from research_tools import ChatExport, Usage, WebSearch
 from browser_action import BrowserAction
 from action_ui import show_action
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -150,6 +150,8 @@ def run_agent(query, image_bytes=None, image_media_type=None):
     )
     st.session_state.last_sources = []
     st.session_state.last_action = None
+    usage = Usage()
+    st.session_state.last_usage = usage
     # build history from session, skip the last message (we construct it below)
     messages = []
     for msg in st.session_state.messages[:-1]:
@@ -198,12 +200,17 @@ def run_agent(query, image_bytes=None, image_media_type=None):
                 status.update(label="Connection failed.", state="error")
                 return "Could not reach Claude. Check your internet connection."
 
-            if response.stop_reason == "end_turn":
+            usage.add(response.usage)
+
+            if response.stop_reason in ("end_turn", "max_tokens"):
                 status.update(label="Research complete!", state="complete", expanded=False)
-                for block in response.content:
-                    if hasattr(block, "text"):
-                        return block.text
-                return "No response generated."
+                # Join every text block; the answer can be split across several.
+                text = "\n\n".join(
+                    block.text for block in response.content if block.type == "text"
+                )
+                if response.stop_reason == "max_tokens":
+                    text += "\n\n*(Answer cut off at the length limit. Ask me to continue.)*"
+                return text or "No response generated."
 
             if response.stop_reason == "tool_use":
                 messages.append({"role": "assistant", "content": response.content})
@@ -335,6 +342,8 @@ for message_index, msg in enumerate(st.session_state.messages):
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
         show_sources(msg.get("sources", []))
+        if msg.get("usage"):
+            st.caption(msg["usage"])
         if msg.get("action"):
             show_action(msg["action"], message_index, st.session_state.get("browser_actions_enabled", False))
 
@@ -356,8 +365,12 @@ if prompt := st.chat_input("Ask me anything..."):
         st.markdown(answer)
         sources = st.session_state.get("last_sources", [])
         show_sources(sources)
+        usage = st.session_state.get("last_usage")
+        usage_text = usage.summary() if usage and usage.calls else ""
+        if usage_text:
+            st.caption(usage_text)
         st.session_state.messages.append({
-            "role": "assistant", "content": answer, "sources": sources,
+            "role": "assistant", "content": answer, "sources": sources, "usage": usage_text,
             "action": st.session_state.get("last_action"),
         })
         if st.session_state.get("last_action"):

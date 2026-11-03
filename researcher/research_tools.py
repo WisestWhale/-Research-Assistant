@@ -49,6 +49,33 @@ class WebSearch:
         return output
 
 
+class Usage:
+    """Add up token use over every Claude call made for one question."""
+
+    # Claude Haiku 4.5 list prices in USD per million tokens.
+    INPUT_PRICE = 1.00
+    OUTPUT_PRICE = 5.00
+
+    def __init__(self):
+        self.calls = 0
+        self.input_tokens = 0
+        self.output_tokens = 0
+
+    def add(self, response_usage):
+        self.calls += 1
+        self.input_tokens += response_usage.input_tokens
+        self.output_tokens += response_usage.output_tokens
+
+    def cost(self):
+        return (self.input_tokens * self.INPUT_PRICE
+                + self.output_tokens * self.OUTPUT_PRICE) / 1_000_000
+
+    def summary(self):
+        calls = "call" if self.calls == 1 else "calls"
+        return (f"{self.calls} Claude {calls} · {self.input_tokens:,} input / "
+                f"{self.output_tokens:,} output tokens · ~${self.cost():.4f}")
+
+
 class ChatExport:
     """Keep the downloaded transcript independent of the UI."""
 

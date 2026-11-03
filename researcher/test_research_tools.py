@@ -1,6 +1,8 @@
 import unittest
 
-from research_tools import ChatExport, WebSearch
+from types import SimpleNamespace
+
+from research_tools import ChatExport, Usage, WebSearch
 
 
 class FakeSearchClient:
@@ -80,6 +82,15 @@ class ResearchToolsTests(unittest.TestCase):
         self.assertIn(r"- [Study \[v2\] notes](<https://example.com/a%20b?q=(test)>)", output)
         self.assertEqual(ChatExport.to_markdown([]), "")
         self.assertNotIn("Sources consulted", ChatExport.to_markdown(messages[:1]))
+
+    def test_usage_adds_every_call_and_estimates_cost(self):
+        usage = Usage()
+        usage.add(SimpleNamespace(input_tokens=1_200, output_tokens=300))
+        usage.add(SimpleNamespace(input_tokens=800, output_tokens=200))
+        self.assertEqual((usage.calls, usage.input_tokens, usage.output_tokens), (2, 2_000, 500))
+        self.assertAlmostEqual(usage.cost(), 0.0045)
+        self.assertEqual(usage.summary(),
+                         "2 Claude calls · 2,000 input / 500 output tokens · ~$0.0045")
 
 
 if __name__ == "__main__":

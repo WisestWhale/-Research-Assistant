@@ -7,6 +7,8 @@ A Streamlit research assistant using Claude and Tavily, with PDF retrieval throu
 - Ask follow-up questions using conversation history.
 - Use **Clear chat** to remove the current conversation and its source list while keeping uploaded files available. Download the chat first if you want to keep it.
 - Inspect the sources consulted for each answer.
+- See how many Claude calls and tokens each answer used, with an estimated cost at Claude Haiku 4.5 list prices.
+- Long answers cut off at the length limit are shown with a note instead of being discarded.
 - Choose 1–5 results per search. Repeated searches within a question reuse results.
 - Upload PDFs for retrieval or images for visual questions.
 - Download a plain-text or Markdown transcript, including source links. Markdown keeps answer formatting and clickable sources under each answer.
@@ -63,7 +65,7 @@ From the project root:
 python -m unittest discover -s researcher -p "test_*.py" -v
 ```
 
-The offline tests cover search reuse, source deduplication, link filtering, retry after failure, blank queries, text transcripts and Markdown export (including escaped source labels). They do not exercise live APIs or the Streamlit interface.
+The offline tests cover search reuse, source deduplication, link filtering, retry after failure, blank queries, token usage totals, text transcripts and Markdown export (including escaped source labels). They do not exercise live APIs or the Streamlit interface.
 
 ## Current limitations
 
