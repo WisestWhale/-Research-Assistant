@@ -1,0 +1,39 @@
+[
+  {
+    "id": "notepad",
+    "names": ["notepad", "note pad", "text editor"],
+    "exe": "%WINDIR%\\System32\\notepad.exe",
+    "window_exe": "notepad.exe"
+  },
+  {
+    "id": "explorer",
+    "names": ["explorer", "file explorer", "files", "windows explorer"],
+    "exe": "%WINDIR%\\explorer.exe",
+    "window_exe": "explorer.exe"
+  },
+  {
+    "id": "chrome",
+    "names": ["chrome", "google chrome"],
+    "exe": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "window_exe": "chrome.exe"
+  },
+  {
+    "id": "edge",
+    "names": ["edge", "microsoft edge"],
+    "exe": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+    "window_exe": "msedge.exe"
+  },
+  {
+    "id": "vscode",
+    "names": ["vs code", "vscode", "visual studio code", "code"],
+    "exe": "%LOCALAPPDATA%\\Programs\\Microsoft VS Code\\Code.exe",
+    "window_exe": "code.exe"
+  },
+  {
+    "id": "premiere",
+    "names": ["premiere", "premiere pro", "adobe premiere", "adobe premiere pro"],
+    "exe": "C:\\Program Files\\Adobe\\Adobe Premiere Pro 2026\\Adobe Premiere Pro.exe",
+    "window_exe": "adobe premiere pro.exe",
+    "launch_timeout_seconds": 120
+  }
+]
