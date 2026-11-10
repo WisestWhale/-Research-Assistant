@@ -8,7 +8,7 @@ from research_tools import ChatExport, Usage, WebSearch
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from pinecone import Pinecone
 from langchain_pinecone import PineconeVectorStore
-from langchain_community.document_loaders import PyMuPDFLoader
+from langchain_community.document_loaders import PyPDFLoader
 import tempfile
 from langchain_huggingface import HuggingFaceEmbeddings
 from requirements_ui import show_requirements
@@ -174,7 +174,7 @@ def load_pdf_bytes(content):
             tmp.write(content)
             tmp_path = tmp.name
 
-        return PyMuPDFLoader(tmp_path).load()
+        return PyPDFLoader(tmp_path).load()
 
     finally:
         if tmp_path and os.path.exists(tmp_path):
