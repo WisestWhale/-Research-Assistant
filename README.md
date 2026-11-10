@@ -79,3 +79,7 @@ The offline tests cover search reuse, source deduplication, link filtering, retr
 - Conversation history stays in the current Streamlit session.
 - Prior image attachments are not resent on later questions.
 - API credentials are required at startup for all services.
+
+## License
+
+Apache-2.0. See [LICENSE](LICENSE). Models and services used at runtime have their own terms; see [docs/PLAN.md](docs/PLAN.md) section 6.

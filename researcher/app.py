@@ -9,7 +9,7 @@ import base64
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from pinecone import Pinecone
 from langchain_pinecone import PineconeVectorStore
-from langchain_community.document_loaders import PyMuPDFLoader
+from langchain_community.document_loaders import PyPDFLoader
 import tempfile
 from langchain_huggingface import HuggingFaceEmbeddings
 
@@ -119,7 +119,7 @@ def ingest_pdf(uploaded_file):
             tmp.write(uploaded_file.getvalue())
             tmp_path = tmp.name
 
-        loader = PyMuPDFLoader(tmp_path)
+        loader = PyPDFLoader(tmp_path)
         documents = loader.load()
         chunks = text_splitter.split_documents(documents)
 
