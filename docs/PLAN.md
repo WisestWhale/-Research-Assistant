@@ -1,7 +1,8 @@
 # Desktop agent plan
 
 Status: draft, reviewed 2026-11-10 for guardrails, licences and speed. Numbers marked
-*unverified* come from vendor pages or estimates and must be measured in M0.
+*unverified* come from vendor pages or estimates. M0 measurements and decisions are in
+[m0-results.md](m0-results.md).
 
 ## 1. Goal
 
@@ -72,7 +73,7 @@ regardless of which lane produced it.
 
 | Component | Job | Key rules |
 |---|---|---|
-| Router | Sends a command to the fast, slow or background lane | Deterministic pattern match first. If that fails, a small model (LFM3-1.7B or MiniCPM5-2B, whichever wins M0) classifies into a fast-lane command or the slow lane. Unknown goes to the slow lane. |
+| Router | Sends a command to the fast, slow or background lane | Deterministic pattern match first. If that fails, a small model (LFM3-1.7B, chosen in M0) classifies into a fast-lane command or the slow lane. Unknown goes to the slow lane. |
 | Fast lane | Runs common one-shot commands with no model | Fixed list: open app (by app-table id), switch window, volume, find file. Results (file names, paths) are marked untrusted when passed on. |
 | Orchestrator | Step loop for multi-step tasks | Step cap; stops after two identical failures; blocks three identical consecutive proposals; caps asks per minute; one task at a time. |
 | Observer | Turns the target window into a compact element list | Visible, actionable, named only; skips password fields; logs truncation; tracks window handle, process id and exe path; scopes Chrome/Electron queries to a subtree. |
@@ -174,9 +175,9 @@ law requires in some places.
 
 | Piece | Choice | Licence | Status |
 |---|---|---|---|
-| Brain and vision | `qwen3.5:4b` on Ollama (installed: 0.40.15) | Apache-2.0 | Not pulled yet. About 5 GB at Q4 (*unverified*). Test `format` with thinking off in M0; the known bug was fixed in Ollama 0.31.2. |
-| Fast text model | LFM3-1.7B (GGUF) | LFM Open License v1.0: free while annual revenue is under $10M; redistribution needs the licence copy and change notices | Contender for the router fallback and for the brain. About 1 GB, so it can stay loaded next to Qwen. Text-only. Its card advises against complex multi-step reasoning, and thinking-off "can be inconsistent". Ollama support for LFM3 *unverified*. |
-| Fast text model | MiniCPM5-2B (OpenBMB, GGUF) | Apache-2.0 per the repo README; confirm on the weights' model card | Second contender for the same slot as LFM3. 2.5B, 131K context, thinking toggle (`enable_thinking`), XML tool calls. Text-only. No tool-calling score published. Vendor recommends SGLang for tool use; Ollama `format` behaviour *unverified*. |
+| Brain and vision | `qwen3.5:4b` on Ollama (installed: 0.40.15) | Apache-2.0 | **Chosen as step-loop brain (M0).** 3.2 GB VRAM, 19/20 schema-valid, 1.3 s median step with `think: false` and `format`. Followed injected text in the M0 injection case. |
+| Router fallback | LFM3-1.7B (Q4_K_M GGUF) | LFM Open License v1.0: free while annual revenue is under $10M; redistribution needs the licence copy and change notices | **Chosen as router fallback (M0).** 1.2 GB, 0.8 s median step, runs on Ollama. Makes up element ids, so it never chooses GUI targets. Text-only. |
+| (dropped) | MiniCPM5-2B (Q4_K_M GGUF) | Apache-2.0 (model card confirmed) | Dropped in M0: 15/20 valid, slower than LFM3. Without an output cap it never closed a free-text field. |
 | Brain stretch | `qwen3.5:9b` | Apache-2.0 | 7.1 GB at 8k context on an 8 GB card, so it can't share the GPU with another model. |
 | Runtime fallback | llama.cpp server | MIT | If Ollama bugs bite. |
 | GUI grounding | Holo3.1-4B (H Company, based on Qwen3.5-4B) | Apache-2.0 | Only community GGUF on Ollama. No published latency. Test in M3 whether it can replace Qwen for both roles, which avoids model swaps. |
@@ -186,7 +187,7 @@ law requires in some places.
 | PDF text | pypdf | BSD | Replaces PyMuPDF (AGPL). |
 | Media | ffmpeg | LGPL build only when packaging | GPL or `--enable-nonfree` builds must not be shipped. |
 | Index | SQLite FTS5; embeddings only if keyword search falls short | Public domain | Standard. |
-| Driver | Python `uiautomation`, compared with cua-driver in M0 | Apache-2.0 / MIT | Whether cua-driver uses UIA on Windows is *unverified*. Don't bundle `cua-perception` (partly AGPL). |
+| Driver | Python `uiautomation` 2.0.29 | Apache-2.0 | **Chosen for M1.** 300–400 ms per warm snapshot. cua-driver (MIT) not measured; don't bundle `cua-perception` (partly AGPL). |
 
 Language: Python. The repo is Python and `uiautomation` is Python. premiere-mcp's Node code
 is ported as patterns, not imported. Speech runs as a separate Python process.
@@ -195,8 +196,8 @@ GPU rule on 8 GB: one large model on the GPU at a time. A model swap costs about
 (*unverified*), so the step loop never alternates between models. Speech stays on CPU;
 background jobs yield to the brain.
 
-Expected slow-lane step time: 3–8 s with the 4B (*estimate*). Prompt processing dominates,
-then the UIA snapshot on Chrome and Electron.
+Measured slow-lane step time: about 1.7 s (0.4 s snapshot + 1.3 s model, M0). Every model
+call sets `think: false`, a `num_predict` cap and `maxLength` on free-text schema fields.
 
 ## 7. Milestones
 

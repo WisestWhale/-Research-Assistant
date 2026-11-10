@@ -1,0 +1,124 @@
+{
+  "max_depth": 25,
+  "max_elements": 3000,
+  "warm_runs": 10,
+  "results": [
+    {
+      "app": "Notepad",
+      "window_closed": true,
+      "window_note": "ok",
+      "cold_ms": 504.2,
+      "warm_median_ms": 317.7,
+      "warm_p95_ms": 353.7,
+      "walked": 133,
+      "kept": 37,
+      "truncated_depth": false,
+      "truncated_elements": false,
+      "com_error_count": 0,
+      "com_error_kinds": [],
+      "sample": [
+        {
+          "type": "ButtonControl",
+          "automation_id": ""
+        },
+        {
+          "type": "ButtonControl",
+          "automation_id": ""
+        },
+        {
+          "type": "ButtonControl",
+          "automation_id": ""
+        },
+        {
+          "type": "MenuItemControl",
+          "automation_id": ""
+        },
+        {
+          "type": "ButtonControl",
+          "automation_id": "SettingsButton"
+        }
+      ]
+    },
+    {
+      "app": "File Explorer (Documents)",
+      "window_closed": true,
+      "window_note": "ok",
+      "cold_ms": 803.0,
+      "warm_median_ms": 398.5,
+      "warm_p95_ms": 487.0,
+      "walked": 158,
+      "kept": 70,
+      "truncated_depth": false,
+      "truncated_elements": false,
+      "com_error_count": 0,
+      "com_error_kinds": [],
+      "sample": [
+        {
+          "type": "ButtonControl",
+          "automation_id": ""
+        },
+        {
+          "type": "ButtonControl",
+          "automation_id": ""
+        },
+        {
+          "type": "ButtonControl",
+          "automation_id": ""
+        },
+        {
+          "type": "MenuItemControl",
+          "automation_id": ""
+        },
+        {
+          "type": "ButtonControl",
+          "automation_id": "DetailsPaneToggleButton"
+        }
+      ]
+    },
+    {
+      "app": "Settings",
+      "window_closed": "left open (not identified with certainty)",
+      "window_note": "no new window appeared before timeout"
+    },
+    {
+      "app": "Chrome (about:blank)",
+      "window_closed": true,
+      "window_note": "ok",
+      "cold_ms": 371.9,
+      "warm_median_ms": 385.0,
+      "warm_p95_ms": 471.1,
+      "walked": 252,
+      "kept": 57,
+      "truncated_depth": false,
+      "truncated_elements": false,
+      "com_error_count": 0,
+      "com_error_kinds": [],
+      "sample": [
+        {
+          "type": "ButtonControl",
+          "automation_id": ""
+        },
+        {
+          "type": "ButtonControl",
+          "automation_id": ""
+        },
+        {
+          "type": "ButtonControl",
+          "automation_id": ""
+        },
+        {
+          "type": "ButtonControl",
+          "automation_id": ""
+        },
+        {
+          "type": "ButtonControl",
+          "automation_id": ""
+        }
+      ]
+    },
+    {
+      "app": "Chrome (example.com)",
+      "note": "skipped: same-window navigation would need typing/clicking"
+    }
+  ]
+}
