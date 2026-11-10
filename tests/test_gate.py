@@ -329,8 +329,18 @@ def rule4():
           gui("set_text", element(automation_id="SearchBox"), {"text": "x"}))
     t.hit("AddressBand automation id",
           gui("set_text", element(automation_id="AddressBand"), {"text": "x"}))
-    t.hit("'contains search' is a substring match (Research)",
-          gui("set_text", element(name="Research notes"), {"text": "x"}))
+    t.hit("PART_SearchBox automation id (underscore and PascalCase words)",
+          gui("set_text", element(automation_id="PART_SearchBox"), {"text": "x"}))
+    t.hit("searchEditBox automation id (camelCase words)",
+          gui("set_text", element(automation_id="searchEditBox"), {"text": "x"}))
+    t.hit("Explorer-style 'Search Downloads' name",
+          gui("set_text", element(name="Search Downloads"), {"text": "x"}))
+    t.miss("search must be a whole word: 'Research notes' is a normal field",
+           gui("set_text", element(name="Research notes"), {"text": "x"}), ALLOW, 15)
+    t.miss("search must be a whole word: 'Searchlight' is a normal field",
+           gui("set_text", element(name="Searchlight"), {"text": "x"}), ALLOW, 15)
+    t.miss("ResearchPanel automation id is not a search box (no profile, so 16)",
+           gui("set_text", element(automation_id="ResearchPanel"), {"text": "x"}), ASK, 16)
     t.miss("plain text", gui("set_text", args={"text": "hello"}), ALLOW, 15)
     t.miss("tab character is fine", gui("set_text", args={"text": "a\tb"}), ALLOW, 15)
     t.miss("name merely contains 'address' (needs startswith)",

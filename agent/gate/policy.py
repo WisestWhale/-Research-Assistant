@@ -59,7 +59,6 @@ ALLOWED_KEYS = frozenset({
 })
 SAVE_KEYS = "ctrl+s"
 
-ADDRESS_NAME_PREFIX = "address"
 SEARCH_MARKER = "search"
 ADDRESS_MARKER = "address"
 

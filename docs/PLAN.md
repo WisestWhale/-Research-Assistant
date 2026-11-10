@@ -117,25 +117,34 @@ Principles:
   unclear reply counts as no.
 - Read-only file access, limited to approved folders, with a size cap checked before reading.
 
-M1 gate rules, first match wins:
+M1 gate rules, first match wins. Implemented in `agent/gate/rules.py`, tested in
+`tests/test_gate.py`:
 
+0. Malformed action → block: unknown kind or risk flag, a missing argument, a GUI action with
+   no target, or a target that doesn't match the re-resolved element. Added while building the
+   gate; it blocks the injected delete that qwen proposed in M0.
 1. Foreground is `consent.exe`, `LogonUI.exe` or the secure desktop → block.
 2. Target is a terminal (`WindowsTerminal.exe`, `wt.exe`, `cmd.exe`, `powershell.exe`,
-   `pwsh.exe`, `conhost.exe`, `mintty.exe`), the Run dialog, or an IDE terminal pane → block.
+   `pwsh.exe`, `conhost.exe`, `OpenConsole.exe`, `mintty.exe`), the Run dialog, or an IDE
+   terminal pane, or `launch_app`/`switch_window` points at a terminal → block.
 3. `key` not in the key allow-list → block. The allow-list is Enter, Tab, Esc, arrows, Home,
    End, PgUp, PgDn, Backspace, Ctrl+C, Ctrl+F, Ctrl+Z, Ctrl+S. This blocks Win+any, Alt+F4,
    Ctrl+Shift+Esc, Shift+Delete and Ctrl+V.
-4. `set_text` containing `\r` or `\n`, or into an address bar, search box, Start search or a
-   Run-style edit → block.
-5. `launch_app` with anything other than an id from the app table → block (no paths, no URIs).
+4. `set_text` containing `\r` or `\n`, into a password field, or into an address or search
+   box → block. Detected by whole words in the name or automation id (a name starting with
+   "Address", or the word "search"), so "Research notes" is still a normal field.
+5. `launch_app` or `switch_window` with anything other than an id from the app table → block
+   (no paths, no URIs, no window titles).
 6. A path that fails canonicalisation → block. That covers reparse points (junctions,
    symlinks), UNC paths, `\\?\` paths, alternate data streams, `~` short names and device
    names. Paths are checked as final paths after resolving.
 7. `open_file` with an extension outside the data list (`.txt .md .csv .json .pdf .docx .xlsx
    .png .jpg .mp4 .mkv`), or with a double extension → block.
-8. Read tools on a final path outside the allowed folders, or over the size cap → block.
+8. Any path tool (`open_file`, `read_file`, `analyze_video`, `sum_column`, `count_rows`, and
+   `find_files` when given a path) on a final path outside the allowed folders → block. For
+   `read_file`, `sum_column` and `count_rows`, a file over the size cap → block.
 9. Permanent delete or Empty Recycle Bin → block.
-10. In Explorer or a file dialog: Ctrl+S, drag, invoke on a destructive name (Delete,
+10. In Explorer or a file dialog: Ctrl+S, invoke on a destructive name (Delete,
     Rename, Move to, Cut, Replace, Yes), or a `set_text` that changes a file extension → ask.
     The Delete, F2 and Ctrl+X keys never get here because rule 3 blocks them, so renames go
     through the Rename command and ask.
@@ -147,7 +156,8 @@ M1 gate rules, first match wins:
     allow.
 16. Anything else → ask.
 
-Also blocked in M1: CAPTCHA elements, and automation of sites whose terms forbid bots.
+Still to add before M1 is done (not in the gate yet): block CAPTCHA elements, and block
+automation of sites whose terms forbid bots. M1 has no drag action, so drag needs no rule yet.
 
 Gate tests run without the model. There are at least 100 adversarial cases, and every rule
 above has at least one case that triggers it and one near-miss that doesn't. Examples:

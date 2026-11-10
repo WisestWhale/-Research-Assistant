@@ -15,6 +15,8 @@ from agent.types import ALLOW, ASK, BLOCK, Action, Context, Decision, Element, P
 
 DRIVE_PREFIX = re.compile(r"^[A-Za-z]:\\")
 DRIVE_PREFIX_LENGTH = 3
+# Splits "PART_SearchBox", "searchEditBox" and "Search Downloads" into separate words.
+WORD = re.compile(r"[A-Z]?[a-z]+|[A-Z]+(?![a-z])|\d+")
 
 
 # ---------- small helpers ----------
@@ -79,6 +81,11 @@ def is_inside(path, folder):
     candidate = path.replace("/", "\\").casefold().rstrip("\\")
     root = folder.replace("/", "\\").casefold().rstrip("\\")
     return candidate == root or candidate.startswith(root + "\\")
+
+
+def words_of(label):
+    """Lower-case words of a UI label or automation id, split on spaces, '_' and camelCase."""
+    return [word.casefold() for word in WORD.findall(label)]
 
 
 def suffix_of(name):
@@ -204,11 +211,14 @@ def rule_4_unsafe_text(action, context):
         return "text contains a line break (implicit Enter)"
     if element.is_password:
         return "target is a password field"
-    name = element.name.casefold()
-    automation_id = element.automation_id.casefold()
-    if name.startswith(policy.ADDRESS_NAME_PREFIX) or policy.SEARCH_MARKER in name:
+    # Whole words only, so "Research notes" is a normal field but "Search Downloads" is not.
+    name_words = words_of(element.name)
+    id_words = words_of(element.automation_id)
+    if name_words and name_words[0] == policy.ADDRESS_MARKER:
         return "target is an address or search box"
-    if policy.SEARCH_MARKER in automation_id or policy.ADDRESS_MARKER in automation_id:
+    if policy.SEARCH_MARKER in name_words:
+        return "target is an address or search box"
+    if policy.SEARCH_MARKER in id_words or policy.ADDRESS_MARKER in id_words:
         return "target is an address or search box"
     return None
 
